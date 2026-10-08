@@ -1,4 +1,3 @@
-app/pools.py
 POOLS = {
     "standard": {
         "pool_id": "standard",
