@@ -4,7 +4,7 @@
 
 ![tests](https://img.shields.io/badge/pytest-12%20passed-brightgreen) ![coverage](https://img.shields.io/badge/coverage-97%25-blue)
 
-在线演示：<!-- render 部署后填入，如 https://gacha-lab-xxxx.onrender.com/docs -->（免费实例休眠，首访约 30–60s）
+在线演示：https://gacha-lab.onrender.com/docs（免费实例休眠，首访约 30–60s）
 
 ## 它做什么
 
