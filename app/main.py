@@ -119,3 +119,7 @@ def simulate(pool_id: str = "standard",
         "actual_rate": round(len(gaps) / n, 4),
         "chart": "reports/gap_hist.png",
     }
+
+# 前端演示页：静态兜底路由必须挂在所有 API 路由之后
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

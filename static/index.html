@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gacha-lab · 抽卡系统测试实验室</title>
+<style>
+  :root{
+    --canvas:#111315; --panel:rgba(255,255,255,.05); --ink:rgba(248,248,245,.88);
+    --ink2:#9c9c9c; --action:#ffd802; --info:#0098dc; --line:rgba(255,255,255,.14);
+    --r6:#ffd802; --r5:#c084fc; --r4:#5eb1ef;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--canvas); color:var(--ink);
+    font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
+    min-height:100vh; padding:20px 14px 40px;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 28px);
+  }
+  .wrap{max-width:860px; margin:0 auto;}
+  .head{
+    background:var(--panel); backdrop-filter:blur(5px);
+    clip-path:polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+    padding:18px 20px 16px; margin-bottom:18px; position:relative;
+  }
+  .head::after{content:""; position:absolute; left:0; right:0; bottom:0; height:5px;
+    background:repeating-linear-gradient(-45deg, var(--action) 0 9px, var(--canvas) 9px 18px);}
+  .tag{font-family:Consolas,monospace; font-size:10px; letter-spacing:.12em; color:var(--info); margin-bottom:10px;}
+  h1{font-size:26px; font-weight:900; letter-spacing:-.02em; display:flex; align-items:center; gap:11px;}
+  h1::before{content:""; width:9px; height:26px; background:var(--action);}
+  .sub{color:var(--ink2); font-size:12.5px; margin-top:8px;}
+  .sub a{color:var(--info); text-decoration:none;}
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line);
+    clip-path:polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    padding:15px 16px; margin-bottom:14px;
+  }
+  .panel h2{font-size:14px; font-weight:900; letter-spacing:.06em; margin-bottom:11px;
+    display:flex; align-items:center; gap:9px;}
+  .panel h2 .no{font-family:Consolas,monospace; font-size:10.5px; color:var(--action);
+    border:1px solid rgba(255,216,2,.6); padding:1px 6px; letter-spacing:.08em;}
+  .panel h2::after{content:""; flex:1; height:1px; background:linear-gradient(90deg, rgba(255,255,255,.22), transparent);}
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    background:var(--action); color:#111315; font-weight:800; font-size:15px;
+    border:none; cursor:pointer; padding:11px 30px; font-family:inherit;
+    clip-path:polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+    transition:transform .15s;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn:disabled{opacity:.45; cursor:wait; transform:none;}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line); font-weight:600; font-size:13px; padding:10px 20px;}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(64px, 1fr)); gap:8px; margin-top:14px; min-height:70px;}
+  .card{
+    aspect-ratio:3/4; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:900; font-size:20px; border:1px solid var(--line);
+    background:rgba(255,255,255,.03); animation:pop .25s ease both;
+  }
+  .card small{font-size:10px; font-weight:400; color:var(--ink2); margin-top:4px; font-family:Consolas,monospace;}
+  .card.r6{border-color:var(--r6); color:var(--r6); box-shadow:0 0 16px rgba(255,216,2,.25); background:rgba(255,216,2,.07);}
+  .card.r5{border-color:var(--r5); color:var(--r5);}
+  .card.r4{border-color:var(--r4); color:var(--r4);}
+  @keyframes pop{from{transform:scale(.6); opacity:0;} to{transform:scale(1); opacity:1;}}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px;}
+  .stat{border-left:3px solid var(--action); padding:6px 12px; background:rgba(255,255,255,.03);}
+  .stat b{font-size:22px; font-weight:900; display:block; font-variant-numeric:tabular-nums;}
+  .stat span{font-size:11px; color:var(--ink2);}
+  .stat.info{border-left-color:var(--info);}
+  .stat.info b{color:var(--info);}
+
+  .pity{height:8px; background:rgba(255,255,255,.08); margin-top:6px; overflow:hidden;}
+  .pity i{display:block; height:100%; background:var(--action); transition:width .4s;}
+  .empty{color:var(--ink2); font-size:13px; padding:22px 0; text-align:center; grid-column:1/-1;}
+  .foot{color:var(--ink2); font-size:11px; font-family:Consolas,monospace; text-align:center; margin-top:18px; letter-spacing:.08em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="tag">GACHA-LAB · SELF-VERIFIED PROBABILITY /// QA &amp; DEV TRACK</div>
+    <h1>抽卡系统测试实验室</h1>
+    <p class="sub">自建带 60 抽硬保底的抽卡引擎，转身当它的测试 ——
+      <a href="/docs" target="_blank">接口文档 /docs</a> ·
+      <a href="https://github.com/YX-612/gacha-lab" target="_blank" rel="noopener">GitHub 仓库</a></p>
+  </div>
+
+  <div class="panel">
+    <h2><span class="no">01</span>寻访（公示概率：6★ 2% / 5★ 10% / 4★ 88% · 60 抽硬保底）</h2>
+    <button class="btn" id="pull10">▶ 十连寻访</button>
+    <button class="btn ghost" id="pull1">单抽</button>
+    <div class="grid" id="grid"><div class="empty">点击上方按钮开始寻访 —— 每一抽都会落入 SQLite 流水，供下方统计实时审计</div></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="no">02</span>概率自证（实测 vs 公示）</h2>
+    <div class="stats">
+      <div class="stat"><b id="st-total">0</b><span>总抽数</span></div>
+      <div class="stat"><b id="st-six">0</b><span>六星数</span></div>
+      <div class="stat"><b id="st-actual">—</b><span>实测综合概率</span></div>
+      <div class="stat info"><b>2.85%</b><span>理论综合概率（含保底）</span></div>
+      <div class="stat"><b id="st-claimed">2%</b><span>公示基础概率</span></div>
+      <div class="stat"><b id="st-pity">0<span style="font-size:12px">/60</span></b><span>保底进度</span>
+        <div class="pity"><i id="pity-bar" style="width:0%"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">ENGINE + REST API + PYTEST 97% + MONTE-CARLO 1,000,000 · POWERED BY FASTAPI ON RENDER</div>
+</div>
+
+<script>
+(function(){
+  var KEY = 'gachalab.uid';
+  var uid = localStorage.getItem(KEY);
+  if (!uid) {
+    uid = 'visitor-' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem(KEY, uid);
+  }
+  var grid = document.getElementById('grid');
+  var busy = false;
+
+  function card(r){
+    var d = document.createElement('div');
+    d.className = 'card r' + r;
+    d.innerHTML = r + '<span>star</span>';
+    return d;
+  }
+  function refreshStats(){
+    fetch('/api/stats/' + uid).then(function(r){ return r.json(); }).then(function(s){
+      document.getElementById('st-total').textContent = s.total;
+      document.getElementById('st-six').textContent = s.six_star;
+      document.getElementById('st-actual').textContent = s.actual_rate == null ? '—' : (s.actual_rate * 100).toFixed(2) + '%';
+      document.getElementById('st-pity').innerHTML = s.pity_now + '<span style="font-size:12px">/60</span>';
+      document.getElementById('pity-bar').style.width = (s.pity_now / 60 * 100) + '%';
+    });
+  }
+  function pull(count){
+    if (busy) return;
+    busy = true;
+    var btns = document.querySelectorAll('.btn');
+    btns.forEach(function(b){ b.disabled = true; });
+    fetch('/api/pull', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({uid: uid, pool_id: 'standard', count: count})
+    }).then(function(r){ return r.json(); }).then(function(res){
+      var e = grid.querySelector('.empty');
+      if (e) e.remove();
+      grid.innerHTML = '';
+      res.results.forEach(function(r, i){
+        setTimeout(function(){ grid.appendChild(card(r)); }, i * 55);
+      });
+      setTimeout(refreshStats, res.results.length * 55 + 120);
+    }).catch(function(){
+      alert('请求失败 —— 服务可能在休眠，刷新页面重试（免费实例首访约 30s）');
+    }).finally(function(){
+      busy = false;
+      btns.forEach(function(b){ b.disabled = false; });
+    });
+  }
+  document.getElementById('pull10').addEventListener('click', function(){ pull(10); });
+  document.getElementById('pull1').addEventListener('click', function(){ pull(1); });
+  refreshStats();
+})();
+</script>
+</body>
+</html>
