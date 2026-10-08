@@ -1,3 +1,6 @@
 .venv/  
 data/  
 __pycache__/ 
+.coverage
+htmlcov/
+reports/uvicorn.log

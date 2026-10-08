@@ -19,7 +19,7 @@ def init_db():
 
 def get_db():
     """FastAPI 依赖：每请求一个连接，用完即关。"""
-    conn = sqlite3.connect(DB_PATH, timeout=10)
+    conn = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
